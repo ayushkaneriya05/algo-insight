@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Algorithm Analysis Platform{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content text-center">
+            <div class="hero-icon">
+                <i class="bi bi-diagram-3"></i>
+            </div>
+            <h1 class="hero-title">
+                Algorithm Analysis Platform
+            </h1>
+            <p class="hero-subtitle">
+                Comparative Analysis of <strong class="text-greedy">Greedy</strong> and <strong class="text-dp">Dynamic Programming</strong> Algorithms
+            </p>
+            <p class="hero-description">
+                Explore, visualize, and compare classic algorithmic paradigms through interactive demonstrations
+            </p>
+            
+        </div>
+    </div>
+</section>
+
+<!-- Problem Selection Section -->
+<section class="problems-section">
+    <div class="container">
+        <div class="section-header text-center">
+            <h2 class="section-title">Choose a Problem</h2>
+            <p class="section-subtitle">Select an algorithm problem to explore and analyze</p>
+        </div>
+        
+        <div class="row g-4 justify-content-center">
+            <!-- Knapsack Problem Card -->
+            <div class="col-lg-5 col-md-6">
+                <div class="problem-card" onclick="window.location='{% url 'algorithms:knapsack' %}'">
+                    <div class="card-icon">
+                        <i class="bi bi-bag-fill"></i>
+                    </div>
+                    <h3 class="card-title">Knapsack Problem</h3>
+                    <p class="card-description">
+                        Compare Fractional Knapsack (Greedy) with 0/1 Knapsack (Dynamic Programming)
+                    </p>
+                    <div class="card-badges">
+                        <span class="badge badge-greedy">Greedy</span>
+                        <span class="badge badge-dp">Dynamic Programming</span>
+                    </div>
+                    <div class="card-features">
+                        <div class="feature">
+                            <i class="bi bi-check2-circle"></i>
+                            <span>Value optimization</span>
+                        </div>
+                        <div class="feature">
+                            <i class="bi bi-check2-circle"></i>
+                            <span>Weight constraints</span>
+                        </div>
+                        <div class="feature">
+                            <i class="bi bi-check2-circle"></i>
+                            <span>Fraction vs whole items</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'algorithms:knapsack' %}" class="card-btn">
+                        Explore <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Scheduling Problem Card -->
+            <div class="col-lg-5 col-md-6">
+                <div class="problem-card" onclick="window.location='{% url 'algorithms:scheduling' %}'">
+                    <div class="card-icon">
+                        <i class="bi bi-calendar2-week-fill"></i>
+                    </div>
+                    <h3 class="card-title">Scheduling Problems</h3>
+                    <p class="card-description">
+                        Analyze Activity Selection, Job Scheduling with Deadlines, and Weighted Job Scheduling
+                    </p>
+                    <div class="card-badges">
+                        <span class="badge badge-greedy">Greedy</span>
+                        <span class="badge badge-dp">Dynamic Programming</span>
+                    </div>
+                    <div class="card-features">
+                        <div class="feature">
+                            <i class="bi bi-check2-circle"></i>
+                            <span>Activity selection</span>
+                        </div>
+                        <div class="feature">
+                            <i class="bi bi-check2-circle"></i>
+                            <span>Deadline constraints</span>
+                        </div>
+                        <div class="feature">
+                            <i class="bi bi-check2-circle"></i>
+                            <span>Weighted job scheduling</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'algorithms:scheduling' %}" class="card-btn">
+                        Explore <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Concept Overview Section -->
+<section class="concepts-section">
+    <div class="container">
+        <div class="section-header text-center">
+            <h2 class="section-title">Algorithm Paradigms</h2>
+            <p class="section-subtitle">Understanding the fundamental approaches to problem solving in computer science</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Greedy -->
+            <div class="col-md-6">
+                <div class="concept-card greedy-card">
+                    <div class="concept-header">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                        <h4>Greedy Algorithms</h4>
+                    </div>
+                    <p class="concept-definition">
+                        A <strong>greedy algorithm</strong> builds a solution piece by piece, always choosing 
+                        the next piece that offers the <strong>most immediate benefit</strong>. It makes the 
+                        locally optimal choice at each step with the hope of finding a global optimum.
+                    </p>
+                    
+                    <h6 class="concept-subtitle"><i class="bi bi-star me-1"></i>Key Characteristics</h6>
+                    <ul class="concept-list">
+                        <li><i class="bi bi-check"></i> <strong>Fast execution</strong> - Typically O(n log n) time complexity</li>
+                        <li><i class="bi bi-check"></i> <strong>Simple implementation</strong> - Easy to understand and code</li>
+                        <li><i class="bi bi-check"></i> <strong>Low memory usage</strong> - No need to store subproblem solutions</li>
+                        <li><i class="bi bi-x"></i> <strong>No backtracking</strong> - Decisions are final once made</li>
+                        <li><i class="bi bi-x"></i> <strong>Not always optimal</strong> - May miss the globally best solution</li>
+                    </ul>
+                    
+                    <h6 class="concept-subtitle"><i class="bi bi-question-circle me-1"></i>When to Use</h6>
+                    <p class="concept-note">
+                        Use greedy when the problem has <strong>optimal substructure</strong> and the 
+                        <strong>greedy choice property</strong> - meaning local optimal choices lead to 
+                        global optimal solution.
+                    </p>
+                    
+                    <div class="concept-examples">
+                        <strong>Algorithms in this platform:</strong>
+                        <span class="example-tag">Fractional Knapsack</span>
+                        <span class="example-tag">Activity Selection</span>
+                        <span class="example-tag">Job Scheduling</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- DP -->
+            <div class="col-md-6">
+                <div class="concept-card dp-card">
+                    <div class="concept-header">
+                        <i class="bi bi-grid-3x3-gap-fill"></i>
+                        <h4>Dynamic Programming</h4>
+                    </div>
+                    <p class="concept-definition">
+                        <strong>Dynamic Programming (DP)</strong> solves complex problems by breaking them into 
+                        <strong>overlapping subproblems</strong>, solving each subproblem only once, and 
+                        storing the results to avoid redundant computation (memoization).
+                    </p>
+                    
+                    <h6 class="concept-subtitle"><i class="bi bi-star me-1"></i>Key Characteristics</h6>
+                    <ul class="concept-list">
+                        <li><i class="bi bi-check"></i> <strong>Guarantees optimal solution</strong> - Explores all possibilities</li>
+                        <li><i class="bi bi-check"></i> <strong>Systematic approach</strong> - Builds solution from base cases</li>
+                        <li><i class="bi bi-check"></i> <strong>Avoids recomputation</strong> - Stores intermediate results</li>
+                        <li><i class="bi bi-x"></i> <strong>Higher complexity</strong> - Often O(n²) or O(n×W) time</li>
+                        <li><i class="bi bi-x"></i> <strong>More memory usage</strong> - Requires tables to store solutions</li>
+                    </ul>
+                    
+                    <h6 class="concept-subtitle"><i class="bi bi-question-circle me-1"></i>When to Use</h6>
+                    <p class="concept-note">
+                        Use DP when the problem has <strong>overlapping subproblems</strong> and 
+                        <strong>optimal substructure</strong>, and when you need the guaranteed 
+                        optimal solution regardless of computation cost.
+                    </p>
+                    
+                    <div class="concept-examples">
+                        <strong>Algorithms in this platform:</strong>
+                        <span class="example-tag">0/1 Knapsack</span>
+                        <span class="example-tag">Weighted Job Scheduling</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Comparison Table -->
+        <div class="comparison-overview mt-5">
+            <h5 class="text-center mb-4"><i class="bi bi-arrows-angle-expand me-2"></i>Quick Comparison</h5>
+            <div class="table-responsive">
+                <table class="table comparison-table-home">
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th class="text-greedy">Greedy</th>
+                            <th class="text-dp">Dynamic Programming</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Approach</strong></td>
+                            <td>Top-down, makes irrevocable choices</td>
+                            <td>Bottom-up, considers all options</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Time Complexity</strong></td>
+                            <td>Usually O(n log n)</td>
+                            <td>Usually O(n²) or O(n×W)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Space Complexity</strong></td>
+                            <td>O(1) to O(n)</td>
+                            <td>O(n) to O(n×W)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Solution Quality</strong></td>
+                            <td>Good approximation</td>
+                            <td>Guaranteed optimal</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Best For</strong></td>
+                            <td>Large inputs, real-time systems</td>
+                            <td>Accuracy-critical applications</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

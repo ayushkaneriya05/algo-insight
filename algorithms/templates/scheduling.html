@@ -1,0 +1,829 @@
+{% extends 'base.html' %}
+
+{% block title %}Scheduling Problems - Algorithm Analysis{% endblock %}
+
+{% block content %}
+<section class="page-section">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="header-icon">
+                <i class="bi bi-calendar2-week-fill"></i>
+            </div>
+            <h1 class="page-title">Scheduling Problems</h1>
+            <p class="page-subtitle">
+                Analyze <span class="text-greedy">Activity Selection</span>, 
+                <span class="text-greedy">Job Scheduling with Deadlines</span>, and
+                <span class="text-dp">Weighted Job Scheduling</span>
+            </p>
+        </div>
+
+        <!-- Error Alert -->
+        {% if error %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
+        <!-- Tab Navigation -->
+        <ul class="nav nav-tabs custom-tabs" id="schedulingTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="activity-tab" data-bs-toggle="tab" 
+                        data-bs-target="#activity" type="button" role="tab">
+                    <i class="bi bi-calendar-event me-2"></i>Activity Selection
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="job-tab" data-bs-toggle="tab" 
+                        data-bs-target="#job" type="button" role="tab">
+                    <i class="bi bi-briefcase me-2"></i>Job Scheduling
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="weighted-job-tab" data-bs-toggle="tab" 
+                        data-bs-target="#weighted-job" type="button" role="tab">
+                    <i class="bi bi-graph-up-arrow me-2"></i>Weighted Job Scheduling (DP)
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="schedulingTabContent">
+            <!-- Activity Selection Tab -->
+            <div class="tab-pane fade show active" id="activity" role="tabpanel">
+                <div class="input-card">
+                    <div class="card-header-custom">
+                        <i class="bi bi-input-cursor-text me-2"></i>
+                        Activity Selection Input
+                    </div>
+                    <form method="POST" class="algorithm-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="problem_type" value="activity">
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="bi bi-play-circle me-1"></i>Start Times
+                                        <span class="hint">(comma-separated)</span>
+                                    </label>
+                                    <input type="text" name="start_times" class="form-control" 
+                                           placeholder="e.g., 1, 3, 0, 5, 8, 5" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="bi bi-stop-circle me-1"></i>Finish Times
+                                        <span class="hint">(comma-separated)</span>
+                                    </label>
+                                    <input type="text" name="finish_times" class="form-control" 
+                                           placeholder="e.g., 2, 4, 6, 7, 9, 9" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-compare">
+                                    <i class="bi bi-play-circle me-2"></i>Run Activity Selection
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Examples -->
+                        <div class="quick-examples mt-4">
+                            <span class="example-label">Quick Examples:</span>
+                            <button type="button" class="btn btn-outline-secondary btn-sm activity-example" 
+                                    data-start="1, 3, 0, 5, 8, 5" data-finish="2, 4, 6, 7, 9, 9">
+                                Example 1
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm activity-example" 
+                                    data-start="1, 2, 3, 4, 7, 8, 9" data-finish="3, 5, 4, 7, 10, 9, 11">
+                                Example 2
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm activity-example" 
+                                    data-start="0, 1, 3, 5, 5, 6, 8" data-finish="2, 4, 5, 7, 9, 10, 11">
+                                Example 3
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm activity-example" 
+                                    data-start="1, 2, 0, 3, 8, 5, 6" data-finish="4, 3, 6, 5, 9, 7, 10">
+                                Example 4
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm activity-example" 
+                                    data-start="0, 2, 4, 6, 8, 1, 5" data-finish="3, 5, 7, 9, 10, 4, 8">
+                                Example 5
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                {% if show_activity_results %}
+                <!-- Activity Selection Results -->
+                <div class="results-section">
+                    <div class="input-summary">
+                        <h5><i class="bi bi-info-circle me-2"></i>Input Summary</h5>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <span class="label">Total Activities</span>
+                                <span class="value">{{ activity_input.num_activities }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Input Values Table -->
+                        <div class="input-values-table mt-3">
+                            <h6><i class="bi bi-table me-2"></i>Input Activities</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Activity</th>
+                                            {% for i in activity_result.all_activities %}
+                                            <th class="text-center">A{{ i.activity_index }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>Start Time</strong></td>
+                                            {% for i in activity_result.all_activities %}
+                                            <td class="text-center">{{ i.start_time }}</td>
+                                            {% endfor %}
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Finish Time</strong></td>
+                                            {% for i in activity_result.all_activities %}
+                                            <td class="text-center">{{ i.finish_time }}</td>
+                                            {% endfor %}
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="result-card greedy-result">
+                        <div class="result-header">
+                            <i class="bi bi-lightning-charge"></i>
+                            <h4>Activity Selection (Greedy)</h4>
+                        </div>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="stat-box">
+                                    <span class="stat-label">Activities Selected</span>
+                                    <span class="stat-value">{{ activity_result.selected_count }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-box">
+                                    <span class="stat-label">Time Complexity</span>
+                                    <span class="stat-value">{{ activity_result.time_complexity }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-box">
+                                    <span class="stat-label">Execution Time</span>
+                                    <span class="stat-value">{{ activity_result.execution_time }} ms</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="selected-items mt-4">
+                            <h6><i class="bi bi-list-check me-2"></i>Selected Activities</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Activity</th>
+                                            <th>Start Time</th>
+                                            <th>Finish Time</th>
+                                            <th>Duration</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for activity in activity_result.selected_activities %}
+                                        <tr>
+                                            <td><span class="badge bg-success">A{{ activity.activity_index }}</span></td>
+                                            <td>{{ activity.start_time }}</td>
+                                            <td>{{ activity.finish_time }}</td>
+                                            <td><span class="text-info">{{ activity.duration }} units</span></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Improved Timeline Visualization -->
+                        <div class="activity-timeline mt-4">
+                            <h6><i class="bi bi-bar-chart-steps me-2"></i>Timeline Visualization</h6>
+                            <!-- Timeline Chart -->
+                            <div class="gantt-chart">
+                                <!-- Time axis on top -->
+                                <div class="time-axis">
+                                    {% for marker in activity_result.time_markers %}
+                                    <div class="time-marker" style="left: {{ marker.left_percent }}%;">
+                                        {{ marker.value }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <!-- Activity bars -->
+                                <div class="gantt-bars">
+                                    {% for activity in activity_result.all_activities %}
+                                    <div class="gantt-row">
+                                        <div class="gantt-label">A{{ activity.activity_index }}</div>
+                                        <div class="gantt-bar-container">
+                                            <div class="gantt-bar {% if activity.is_selected %}selected{% else %}rejected{% endif %}"
+                                                 style="left: {{ activity.left_percent }}%; width: {{ activity.width_percent }}%;"
+                                                 title="A{{ activity.activity_index }}: {{ activity.start_time }} → {{ activity.finish_time }} (Duration: {{ activity.duration }})">
+                                                <span class="bar-time">{{ activity.start_time }}-{{ activity.finish_time }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Legend -->
+                            <div class="timeline-legend mt-3">
+                                <div class="legend-item">
+                                    <div class="legend-color selected"></div>
+                                    <span>Selected (Non-overlapping)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color rejected"></div>
+                                    <span>Rejected (Overlapping)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="analysis-card">
+                        <div class="card-header-custom">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            Algorithm Insight
+                        </div>
+                        <div class="analysis-content">
+                            <div class="insight">
+                                <i class="bi bi-arrow-right-circle text-greedy"></i>
+                                <p>
+                                    The <strong>Greedy approach</strong> selects activities by 
+                                    <strong>earliest finish time first</strong>. This guarantees 
+                                    the maximum number of non-overlapping activities.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Job Scheduling Tab -->
+            <div class="tab-pane fade" id="job" role="tabpanel">
+                <div class="input-card">
+                    <div class="card-header-custom">
+                        <i class="bi bi-input-cursor-text me-2"></i>
+                        Job Scheduling Input
+                    </div>
+                    <form method="POST" class="algorithm-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="problem_type" value="job">
+                        
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="bi bi-hash me-1"></i>Job IDs
+                                        <span class="hint">(comma-separated)</span>
+                                    </label>
+                                    <input type="text" name="job_ids" class="form-control" 
+                                           placeholder="e.g., J1, J2, J3, J4" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="bi bi-clock me-1"></i>Deadlines
+                                        <span class="hint">(comma-separated)</span>
+                                    </label>
+                                    <input type="text" name="deadlines" class="form-control" 
+                                           placeholder="e.g., 4, 1, 1, 1" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="bi bi-currency-dollar me-1"></i>Profits
+                                        <span class="hint">(comma-separated)</span>
+                                    </label>
+                                    <input type="text" name="profits" class="form-control" 
+                                           placeholder="e.g., 20, 10, 40, 30" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-compare">
+                                    <i class="bi bi-play-circle me-2"></i>Run Job Scheduling
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Examples -->
+                        <div class="quick-examples mt-4">
+                            <span class="example-label">Quick Examples:</span>
+                            <button type="button" class="btn btn-outline-secondary btn-sm job-example" 
+                                    data-jobs="J1, J2, J3, J4, J5" 
+                                    data-deadlines="2, 1, 2, 1, 3" 
+                                    data-profits="100, 19, 27, 25, 15">
+                                Example 1
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm job-example" 
+                                    data-jobs="A, B, C, D, E" 
+                                    data-deadlines="4, 1, 1, 1, 2" 
+                                    data-profits="20, 10, 40, 30, 50">
+                                Example 2
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm job-example" 
+                                    data-jobs="P1, P2, P3, P4" 
+                                    data-deadlines="2, 1, 3, 2" 
+                                    data-profits="60, 100, 20, 40">
+                                Example 3
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm job-example" 
+                                    data-jobs="X, Y, Z, W, V, U" 
+                                    data-deadlines="1, 3, 4, 3, 2, 1" 
+                                    data-profits="35, 30, 25, 20, 15, 10">
+                                Example 4
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm job-example" 
+                                    data-jobs="T1, T2, T3, T4, T5" 
+                                    data-deadlines="3, 1, 2, 2, 3" 
+                                    data-profits="50, 60, 70, 30, 80">
+                                Example 5
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                {% if show_job_results %}
+                <!-- Job Scheduling Results -->
+                <div class="results-section">
+                    <div class="input-summary">
+                        <h5><i class="bi bi-info-circle me-2"></i>Input Summary</h5>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <span class="label">Total Jobs</span>
+                                <span class="value">{{ job_input.num_jobs }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Input Values Table -->
+                        <div class="input-values-table mt-3">
+                            <h6><i class="bi bi-table me-2"></i>Input Jobs</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Job</th>
+                                            {% for job_id in job_input.job_ids %}
+                                            <th class="text-center">{{ job_id }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>Deadline</strong></td>
+                                            {% for deadline in job_input.deadlines %}
+                                            <td class="text-center">{{ deadline }}</td>
+                                            {% endfor %}
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Profit</strong></td>
+                                            {% for profit in job_input.profits %}
+                                            <td class="text-center text-success">{{ profit }}</td>
+                                            {% endfor %}
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="result-card dp-result">
+                        <div class="result-header">
+                            <i class="bi bi-table"></i>
+                            <h4>Job Scheduling with Deadlines</h4>
+                        </div>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <span class="stat-label">Total Profit</span>
+                                    <span class="stat-value">{{ job_result.total_profit }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <span class="stat-label">Jobs Scheduled</span>
+                                    <span class="stat-value">{{ job_result.jobs_scheduled }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <span class="stat-label">Time Complexity</span>
+                                    <span class="stat-value">{{ job_result.time_complexity }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <span class="stat-label">Execution Time</span>
+                                    <span class="stat-value">{{ job_result.execution_time }} ms</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-4 mt-2">
+                            <div class="col-md-6">
+                                <div class="selected-items">
+                                    <h6><i class="bi bi-list-check me-2"></i>Scheduled Jobs</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Job</th>
+                                                    <th>Deadline</th>
+                                                    <th>Profit</th>
+                                                    <th>Slot</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for job in job_result.selected_jobs %}
+                                                <tr>
+                                                    <td><span class="badge bg-primary">{{ job.job_id }}</span></td>
+                                                    <td>{{ job.deadline }}</td>
+                                                    <td class="text-success">{{ job.profit }}</td>
+                                                    <td><span class="badge bg-info">Slot {{ job.scheduled_at }}</span></td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="schedule-visual">
+                                    <h6><i class="bi bi-calendar3 me-2"></i>Schedule Timeline</h6>
+                                    <div class="schedule-slots">
+                                        {% for slot in job_result.schedule %}
+                                        <div class="slot {% if slot.job_id != 'Empty' %}filled{% endif %}">
+                                            <span class="slot-num">Slot {{ slot.time_slot }}</span>
+                                            <span class="slot-job">{{ slot.job_id }}</span>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="analysis-card">
+                        <div class="card-header-custom">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            Algorithm Insight
+                        </div>
+                        <div class="analysis-content">
+                            <div class="insight">
+                                <i class="bi bi-arrow-right-circle text-dp"></i>
+                                <p>
+                                    The algorithm <strong>sorts jobs by profit</strong> (descending) and 
+                                    assigns each job to the <strong>latest available slot</strong> before 
+                                    its deadline. This maximizes total profit while respecting all deadlines.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Weighted Job Scheduling Tab -->
+            <div class="tab-pane fade" id="weighted-job" role="tabpanel">
+                <div class="input-card">
+                    <div class="card-header-custom">
+                        <i class="bi bi-input-cursor-text me-2"></i>
+                        Weighted Job Scheduling Input (Dynamic Programming)
+                    </div>
+                    <form method="POST" class="algorithm-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="problem_type" value="weighted_job">
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="bi bi-hash me-1"></i>Job IDs
+                                        <span class="hint">(comma-separated)</span>
+                                    </label>
+                                    <input type="text" name="wjob_ids" class="form-control" 
+                                           placeholder="e.g., J1, J2, J3, J4, J5" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="bi bi-currency-dollar me-1"></i>Profits
+                                        <span class="hint">(comma-separated)</span>
+                                    </label>
+                                    <input type="text" name="wjob_profits" class="form-control" 
+                                           placeholder="e.g., 50, 10, 40, 70, 30" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="bi bi-play-circle me-1"></i>Start Times
+                                        <span class="hint">(comma-separated)</span>
+                                    </label>
+                                    <input type="text" name="wjob_start_times" class="form-control" 
+                                           placeholder="e.g., 1, 2, 3, 4, 6" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="bi bi-stop-circle me-1"></i>End Times
+                                        <span class="hint">(comma-separated)</span>
+                                    </label>
+                                    <input type="text" name="wjob_end_times" class="form-control" 
+                                           placeholder="e.g., 3, 5, 6, 8, 9" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-compare">
+                                    <i class="bi bi-play-circle me-2"></i>Run Weighted Job Scheduling (DP)
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Examples -->
+                        <div class="quick-examples mt-4">
+                            <span class="example-label">Quick Examples:</span>
+                            <button type="button" class="btn btn-outline-secondary btn-sm weighted-job-example" 
+                                    data-jobs="J1, J2, J3, J4" 
+                                    data-start="1, 2, 3, 4" 
+                                    data-end="3, 5, 6, 8" 
+                                    data-profits="50, 10, 40, 70">
+                                Example 1
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm weighted-job-example" 
+                                    data-jobs="A, B, C, D, E" 
+                                    data-start="1, 2, 4, 6, 5" 
+                                    data-end="3, 5, 6, 7, 9" 
+                                    data-profits="20, 20, 100, 70, 60">
+                                Example 2
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm weighted-job-example" 
+                                    data-jobs="P1, P2, P3, P4, P5" 
+                                    data-start="0, 1, 3, 2, 5" 
+                                    data-end="2, 4, 5, 6, 8" 
+                                    data-profits="30, 25, 50, 40, 60">
+                                Example 3
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm weighted-job-example" 
+                                    data-jobs="X1, X2, X3, X4, X5, X6" 
+                                    data-start="1, 3, 0, 4, 3, 5" 
+                                    data-end="2, 4, 6, 7, 8, 9" 
+                                    data-profits="50, 20, 100, 25, 35, 45">
+                                Example 4
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm weighted-job-example" 
+                                    data-jobs="Task1, Task2, Task3, Task4" 
+                                    data-start="1, 3, 6, 2" 
+                                    data-end="4, 5, 9, 8" 
+                                    data-profits="80, 40, 100, 60">
+                                Example 5
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                {% if show_weighted_job_results %}
+                <!-- Weighted Job Scheduling Results -->
+                <div class="results-section">
+                    <div class="input-summary">
+                        <h5><i class="bi bi-info-circle me-2"></i>Input Summary</h5>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <span class="label">Total Jobs</span>
+                                <span class="value">{{ weighted_job_input.num_jobs }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Input Values Table -->
+                        <div class="input-values-table mt-3">
+                            <h6><i class="bi bi-list-ul me-2"></i>Input Jobs</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Job ID</th>
+                                            <th>Start</th>
+                                            <th>End</th>
+                                            <th>Profit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for job in weighted_job_result.all_jobs %}
+                                        <tr>
+                                            <td>{{ job.job_id }}</td>
+                                            <td>{{ job.start_time }}</td>
+                                            <td>{{ job.end_time }}</td>
+                                            <td>{{ job.profit }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-card dp-result">
+                        <div class="result-header">
+                            <i class="bi bi-grid-3x3-gap-fill"></i>
+                            <h4>Weighted Job Scheduling (DP)</h4>
+                        </div>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <span class="stat-label">Maximum Profit</span>
+                                    <span class="stat-value text-warning">{{ weighted_job_result.max_profit }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <span class="stat-label">Jobs Selected</span>
+                                    <span class="stat-value text-success">{{ weighted_job_result.jobs_selected }} / {{ weighted_job_result.total_jobs }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <span class="stat-label">Time Complexity</span>
+                                    <span class="stat-value">{{ weighted_job_result.time_complexity }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box">
+                                    <span class="stat-label">Execution Time</span>
+                                    <span class="stat-value">{{ weighted_job_result.execution_time }} ms</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Selected Jobs List -->
+                        <div class="selected-items mt-4">
+                            <h6><i class="bi bi-list-check me-2"></i>Selected Jobs (Non-overlapping)</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Job</th>
+                                            <th>Start Time</th>
+                                            <th>End Time</th>
+                                            <th>Profit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for job in weighted_job_result.selected_jobs %}
+                                        <tr>
+                                            <td><span class="badge bg-success">{{ job.job_id }}</span></td>
+                                            <td>{{ job.start_time }}</td>
+                                            <td>{{ job.end_time }}</td>
+                                            <td><span class="text-warning">{{ job.profit }}</span></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Timeline Visualization (same as Activity Selection) -->
+                        <div class="activity-timeline mt-4">
+                            <h6><i class="bi bi-bar-chart-steps me-2"></i>Timeline Visualization</h6>
+                            
+                            <!-- Timeline Chart -->
+                            <div class="gantt-chart">
+                                <!-- Time axis on top -->
+                                <div class="time-axis">
+                                    {% for marker in weighted_job_result.time_markers %}
+                                    <div class="time-marker" style="left: {{ marker.left_percent }}%;">
+                                        {{ marker.value }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <!-- Job bars -->
+                                <div class="gantt-bars">
+                                    {% for job in weighted_job_result.all_jobs %}
+                                    <div class="gantt-row">
+                                        <div class="gantt-label">{{ job.job_id }}</div>
+                                        <div class="gantt-bar-container">
+                                            <div class="gantt-bar {% if job.is_selected %}selected{% else %}rejected{% endif %}"
+                                                 style="left: {{ job.left_percent }}%; width: {{ job.width_percent }}%;"
+                                                 title="{{ job.job_id }}: {{ job.start_time }} → {{ job.end_time }} (Profit: {{ job.profit }})">
+                                                <span class="bar-time">{{ job.start_time }}-{{ job.end_time }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Legend -->
+                            <div class="timeline-legend mt-3">
+                                <div class="legend-item">
+                                    <div class="legend-color selected"></div>
+                                    <span>Selected (Non-overlapping)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color rejected"></div>
+                                    <span>Rejected (Overlapping)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Algorithm Analysis -->
+                    <div class="analysis-card mt-4">
+                        <div class="analysis-header">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            Algorithm Insight
+                        </div>
+                        <div class="analysis-content">
+                            <div class="insight">
+                                <i class="bi bi-arrow-right-circle text-dp"></i>
+                                <p>
+                                    The algorithm <strong>sorts jobs by end time</strong> and uses 
+                                    <strong>dynamic programming with binary search</strong> to find the 
+                                    maximum profit. For each job, it decides whether to include it 
+                                    (add its profit + max profit from non-conflicting jobs) or exclude it.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+{% block extra_js %}
+<script>
+    // Activity example buttons
+    document.querySelectorAll('.activity-example').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelector('#activity input[name="start_times"]').value = this.dataset.start;
+            document.querySelector('#activity input[name="finish_times"]').value = this.dataset.finish;
+        });
+    });
+
+    // Job example buttons
+    document.querySelectorAll('.job-example').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelector('#job input[name="job_ids"]').value = this.dataset.jobs;
+            document.querySelector('#job input[name="deadlines"]').value = this.dataset.deadlines;
+            document.querySelector('#job input[name="profits"]').value = this.dataset.profits;
+        });
+    });
+
+    // Weighted Job example buttons
+    document.querySelectorAll('.weighted-job-example').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelector('#weighted-job input[name="wjob_ids"]').value = this.dataset.jobs;
+            document.querySelector('#weighted-job input[name="wjob_start_times"]').value = this.dataset.start;
+            document.querySelector('#weighted-job input[name="wjob_end_times"]').value = this.dataset.end;
+            document.querySelector('#weighted-job input[name="wjob_profits"]').value = this.dataset.profits;
+        });
+    });
+
+    // Activate job tab if job results are shown
+    {% if show_job_results %}
+    document.getElementById('job-tab').click();
+    {% endif %}
+    
+    // Activate weighted job tab if weighted job results are shown
+    {% if show_weighted_job_results %}
+    document.getElementById('weighted-job-tab').click();
+    {% endif %}
+</script>
+{% endblock %}
+{% endblock %}
