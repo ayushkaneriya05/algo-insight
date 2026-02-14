@@ -183,7 +183,6 @@ dp[i] = max(profit[i] + dp[last_non_conflicting(i)], dp[i-1])
 | **Interactivity** | Vanilla JavaScript | Gantt charts, dynamic form handling |
 | **Icons** | Bootstrap Icons | UI iconography |
 | **Database** | SQLite 3 | Default Django session/admin storage |
-| **Image Processing** | Pillow 11.0 | Image handling support |
 
 ---
 
@@ -276,21 +275,109 @@ This installs:
 | Package | Version | Purpose |
 |---------|---------|---------|
 | Django | 6.0.2 | Web framework |
-| Pillow | 11.0.0 | Image processing library |
 
-#### 4. Apply Database Migrations
+#### 4. Configure Django Settings
+
+> **Note:** `settings.py` is not included in the repository for security reasons. You need to create it manually.
+
+Create the file `algoinsight/settings.py` with the following content:
+
+```python
+"""
+Django settings for algoinsight project.
+"""
+
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# SECURITY WARNING: Generate your own secret key!
+# Run: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+SECRET_KEY = 'your-secret-key-here'
+
+DEBUG = True
+
+ALLOWED_HOSTS = []
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'algorithms',
+]
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ROOT_URLCONF = 'algoinsight.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'algoinsight.wsgi.application'
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
+
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
+
+STATIC_URL = 'static/'
+```
+
+> **⚠️ Important:** Replace `'your-secret-key-here'` with a unique secret key. Generate one by running:
+> ```bash
+> python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+> ```
+
+#### 5. Apply Database Migrations
 
 ```bash
 python manage.py migrate
 ```
 
-#### 5. Start the Development Server
+#### 6. Start the Development Server
 
 ```bash
 python manage.py runserver
 ```
 
-#### 6. Open in Browser
+#### 7. Open in Browser
 
 Navigate to **http://127.0.0.1:8000** — you'll see the AlgoInsight home page.
 
